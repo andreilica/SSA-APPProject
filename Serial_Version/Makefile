@@ -1,7 +1,7 @@
 all: antialiasing
 
 antialiasing: antialiasing.c antialiasing.h main.c
-	gcc -o antialiasing antialiasing.c main.c -lpthread -Wall -lm
+	gcc -o antialiasing antialiasing.c main.c -Wall -lm
 
 .PHONY: clean
 clean:
