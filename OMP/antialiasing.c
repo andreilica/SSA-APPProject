@@ -5,7 +5,9 @@
 #include <ctype.h>
 #include <math.h>
 #include <omp.h>
+
 #define MIN(x, y) (((x) < (y)) ? (x) : (y))
+#define NUM_THREADS 4
 
 int resize_factor;
 image *aux_in, *aux_out;
@@ -128,7 +130,7 @@ void* antialiasing()
     int square_resize = resize_factor * resize_factor;
     int GaussianKernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
-    omp_set_num_threads(4);
+    omp_set_num_threads(NUM_THREADS);
 
     double start = 0, end = aux_out -> height;
 
@@ -139,7 +141,7 @@ void* antialiasing()
         if(aux_out -> colored == 0) { //grayscale
 
             k = start;
-            #pragma omp task private(x,y,z,i,j,new_pixel,q,w) 
+            #pragma omp task private(x,y,z,i,j,new_pixel,q,w) firstprivate(k)
             for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
                 for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
                     new_pixel = 0;
@@ -153,7 +155,10 @@ void* antialiasing()
 
             #pragma omp critical
             {
-                if (k == end) x = end * resize_factor;
+                if (k == end) {
+                   #pragma omp taskwait
+                   x = end * resize_factor;
+                }
                 else k++;
             }
 
@@ -162,7 +167,7 @@ void* antialiasing()
         } else { //color
             
                 k = start;
-                #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) 
+                #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) firstprivate(k)
                 for(x = start * resize_factor; x < (long)end * resize_factor; x+=resize_factor) {
                     for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
                         red = 0;
@@ -194,7 +199,10 @@ void* antialiasing()
 
                     #pragma omp critical
                     {
-                    if (k == end) x = end * resize_factor;
+                    if (k == end){ 
+                        #pragma omp taskwait
+                        x = end * resize_factor;
+                    }
                     else k++;
                     }
             }
@@ -205,7 +213,7 @@ void* antialiasing()
         if(aux_out -> colored == 0) { //grayscale
 
             k = start;
-            #pragma omp task private(x,y,z,i,j,new_pixel)
+            #pragma omp task private(x,y,z,i,j,new_pixel) firstprivate(k)
             for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
                 for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
                     new_pixel = 0;
@@ -219,14 +227,17 @@ void* antialiasing()
 
                 #pragma omp critical
                 {
-                    if (k == end) x = end * resize_factor;
+                    if (k == end){
+                        #pragma omp taskwait
+                        x = end * resize_factor;
+                    }
                     else k++;
                 }
             }
                        
         } else { //color
             k = start;
-            #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) 
+            #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) firstprivate(k)
             for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
                 for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
                     red = 0;
@@ -256,7 +267,10 @@ void* antialiasing()
 
                 #pragma omp critical
                 {
-                    if (k == end) x = end * resize_factor;
+                    if (k == end){
+                        #pragma omp taskwait
+                        x = end * resize_factor;
+                    }
                     else k++;
                 }
             }
