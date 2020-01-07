@@ -140,10 +140,10 @@ void* antialiasing()
 
         if(aux_out -> colored == 0) { //grayscale
 
-            k = start;
-            #pragma omp parallel for schedule(dynamic) private(x,y,z,i,j,new_pixel,q,w) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                if (k !=end){
+            #pragma omp parallel for private(k,i,q,j,y,w,new_pixel,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if (k < end){
                     for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
                         new_pixel = 0;
                        
@@ -153,11 +153,10 @@ void* antialiasing()
                             }
                         aux_out -> pixels[k][z] = new_pixel / 16;
                     }
-
-                    k++;
                 }
+
                 else{
-                    x = (long) end * resize_factor;
+                    x = (int) end * resize_factor;
                 }
 
             }
@@ -165,10 +164,10 @@ void* antialiasing()
         } 
         else { //color
                 
-            k = start;
-            #pragma omp parallel for schedule(dynamic) private(x,y,z,i,j,q,w,red,green,blue) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x+=resize_factor) {
-                if (k!=end) {
+            #pragma omp parallel for private(k,i,q,j,y,w,green,blue,red,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x+=resize_factor) {
+                k = (int)x / resize_factor;
+                if (k < end) {
                     for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3) {
                         red = 0;
                         green = 0;
@@ -189,11 +188,10 @@ void* antialiasing()
                        aux_out -> pixels[k][z + 1] = green / 16;
                        aux_out -> pixels[k][z + 2] = blue / 16;
                     }
-
-                    k++;
                 }
+
                 else {
-                    x = (long) end * resize_factor;
+                    x = (int) end * resize_factor;
                 }
             }
         }
@@ -202,10 +200,10 @@ void* antialiasing()
         
         if(aux_out -> colored == 0) { //grayscale
 
-            k = start;
-            #pragma omp parallel for schedule(dynamic) private(x,y,z,i,j,new_pixel) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                if (k!=end){
+            #pragma omp parallel for private(k,i,q,j,y,w,new_pixel,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if (k < end){
                     for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
                         new_pixel = 0;
                         
@@ -215,20 +213,18 @@ void* antialiasing()
                             }
                         aux_out -> pixels[k][z] = new_pixel / square_resize;
                     }
-
-                    k++;
                 }
                 else{
-                    k = (long) end * resize_factor;
+                    k = (int) end * resize_factor;
                 }
-
             }
                        
         } else { //color
             k = start;
-            #pragma omp parallel for schedule(dynamic) private(x,y,z,i,j,red,green,blue,q,w) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                if(k != end){
+            #pragma omp parallel for private(k,i,q,j,y,w,green,blue,red,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if(k < end){
                     for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
                         red = 0;
                         green = 0;
@@ -254,11 +250,9 @@ void* antialiasing()
                         aux_out -> pixels[k][z + 1] = green / square_resize;
                         aux_out -> pixels[k][z + 2] = blue / square_resize;
                     }
-
-                    k++;
                 }
                 else{
-                    x = (long) end * resize_factor;
+                    x = (int) end * resize_factor;
                 }
             }
         }
