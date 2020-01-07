@@ -219,7 +219,7 @@ void* antialiasing()
                 }
             }
                        
-        } else { //color
+        } else { //color 
             k = start;
             #pragma omp parallel for private(k,i,q,j,y,w,green,blue,red,z) schedule(static)
             for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
