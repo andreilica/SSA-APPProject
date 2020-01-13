@@ -13,7 +13,7 @@ int resize_factor, rank, nProcesses;
 image *aux_in, *aux_out;
 image input, output;
 
-unsigned char** allocMatrix(long n, long m) {
+unsigned char** allocMatrix(int n, int m) {
 
 	unsigned char** matrix;
 
@@ -22,7 +22,7 @@ unsigned char** allocMatrix(long n, long m) {
 		exit(1);
 	}
 
-	long i;
+	int i;
 
 	for(i = 0; i < n; i++) {
 		matrix[i] = (unsigned char*) malloc(sizeof(unsigned char) * m);
@@ -37,25 +37,25 @@ unsigned char** allocMatrix(long n, long m) {
 
 void readInput(const char * fileName, image *img) {
 
-    FILE *filePolonger;
+    FILE *filePointer;
 
     char line[50];
     char *token;
-    long linepixelnum;
+    int linepixelnum;
 
-    filePolonger = fopen(fileName, "rb");
-    if(filePolonger == NULL){
+    filePointer = fopen(fileName, "rb");
+    if(filePointer == NULL){
         printf("File not found!\n");
         exit(1);
     }
-    if(fgets(line, sizeof(line), filePolonger) == NULL)
+    if(fgets(line, sizeof(line), filePointer) == NULL)
         exit(1);
     if(line[1] - '0' == 5)
         img -> colored = 0;
     if(line[1] - '0' == 6)
         img -> colored = 1;
 
-    if(fgets(line, sizeof(line), filePolonger) == NULL)
+    if(fgets(line, sizeof(line), filePointer) == NULL)
         exit(1);
     if( (token = strtok(line, " \n")) != NULL ) {
         img -> width = atoi(token);
@@ -64,7 +64,7 @@ void readInput(const char * fileName, image *img) {
     }
 
     do{
-        if(fgets(line, sizeof(line), filePolonger) == NULL)
+        if(fgets(line, sizeof(line), filePointer) == NULL)
             exit(1);
     }while(!isdigit(line[0]));
         img -> max_value = atoi(line); 
@@ -72,28 +72,28 @@ void readInput(const char * fileName, image *img) {
     if(img -> colored){
         linepixelnum = img -> width * 3;
         img -> pixels = allocMatrix(img -> height, linepixelnum);
-        for(long i = 0; i < img -> height; i++){
-            fread(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePolonger);
+        for(int i = 0; i < img -> height; i++){
+            fread(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePointer);
         }
 
     } else {
         linepixelnum = img -> width;
         img -> pixels = allocMatrix(img -> height, linepixelnum);
-        for(long i = 0; i < img -> height; i++){
-            fread(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePolonger);
+        for(int i = 0; i < img -> height; i++){
+            fread(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePointer);
         }
     }
     
-    fclose(filePolonger);
+    fclose(filePointer);
 }
 
 void writeData(const char * fileName, image *img) {
 
-    FILE *filePolonger;
-    long linepixelnum;
+    FILE *filePointer;
+    int linepixelnum;
     
-    filePolonger = fopen(fileName, "wb");
-    if(filePolonger == NULL){
+    filePointer = fopen(fileName, "wb");
+    if(filePointer == NULL){
         printf("Cannot create file!\n");
         exit(1);
     }
@@ -101,38 +101,38 @@ void writeData(const char * fileName, image *img) {
     if(img -> colored){
         linepixelnum = img -> width * 3;
         
-        fprintf(filePolonger, "P6\n");
-        fprintf(filePolonger, "%d %d\n", img -> width, img -> height);
-        fprintf(filePolonger, "%d\n", img -> max_value);
+        fprintf(filePointer, "P6\n");
+        fprintf(filePointer, "%d %d\n", img -> width, img -> height);
+        fprintf(filePointer, "%d\n", img -> max_value);
 
-        for(long i = 0; i <  img -> height; i++){
-            fwrite(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePolonger);
+        for(int i = 0; i <  img -> height; i++){
+            fwrite(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePointer);
         }
 
     } else {
         linepixelnum = img -> width;
 
-        fprintf(filePolonger, "P5\n");
-        fprintf(filePolonger, "%d %d\n", img -> width, img -> height);
-        fprintf(filePolonger, "%d\n", img -> max_value);
+        fprintf(filePointer, "P5\n");
+        fprintf(filePointer, "%d %d\n", img -> width, img -> height);
+        fprintf(filePointer, "%d\n", img -> max_value);
 
-        for(long i = 0; i < img -> height; i++){
-            fwrite(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePolonger);
+        for(int i = 0; i < img -> height; i++){
+            fwrite(img -> pixels[i], sizeof(unsigned char), linepixelnum, filePointer);
         }
     }
 
-    fclose(filePolonger);
+    fclose(filePointer);
 }
 
 void* antialiasing()
 {
-    long i, j, x, k, q, z, y, w;
-    long new_pixel = 0, red = 0, green = 0, blue = 0;
-    long square_resize = resize_factor * resize_factor;
-    long GaussianKernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
+	int i, j, x, k, q, z, y, w;
+    int new_pixel = 0, red = 0, green = 0, blue = 0;
+    int square_resize = resize_factor * resize_factor;
+    int GaussianKernel[3][3] = {{1, 2, 1}, {2, 4, 2}, {1, 2, 1}};
 
-    long start = rank * ceil((double)aux_out -> height/nProcesses);
-    long end = MIN(aux_out -> height, (rank + 1) * ceil((double)aux_out -> height/nProcesses) );
+    int start = rank * ceil((double)aux_out -> height/nProcesses);
+	int end = MIN(aux_out -> height, (rank + 1) * ceil((double)aux_out -> height/nProcesses) );
 
     if(resize_factor == 0){
 
@@ -241,7 +241,7 @@ void* antialiasing()
 
 void resize(image *in, image *out) { 
 
-    long i, j;
+    int i, j;
     aux_in = in;
     aux_out = out;
         
@@ -297,7 +297,7 @@ int main(int argc, char * argv[]) {
     MPI_Init(&argc, &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &nProcesses);
-    const long root = 0;
+    const int root = 0;
     unsigned char *pixelArray;
 
     //argv[1] input
@@ -325,13 +325,13 @@ int main(int argc, char * argv[]) {
 
     if(rank == root){
         if(input.colored == 0){
-            for(long i = 0; i < input.height; i++)
-                for(long j = 0; j < input.width; j++)
+            for(int i = 0; i < input.height; i++)
+                for(int j = 0; j < input.width; j++)
                     pixelArray[i * input.width + j] = input.pixels[i][j];
         }
         else {
-            for(long i = 0; i < input.height; i++)
-                for(long j = 0; j < 3 * input.width; j++)
+            for(int i = 0; i < input.height; i++)
+                for(int j = 0; j < 3 * input.width; j++)
                     pixelArray[i * (3 * input.width) + j] = input.pixels[i][j];
         }
     }else {
@@ -344,19 +344,20 @@ int main(int argc, char * argv[]) {
     if(input.colored == 0)
         MPI_Bcast(pixelArray, input.width * input.height, MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
     else{
-        long count, k;
+        int count, k;
         double picture_size = 3 * (double)input.width * (double)input.height;
         double total = 0;
         if (picture_size > MAX_VAL){
             count = picture_size / MAX_VAL;
             for(k = 0; k < count; k++){
                 printf("De la: %lf pana la %lf\n", (double)k * MAX_VAL, (double)k * MAX_VAL + MAX_VAL - 1);
-                MPI_Bcast(pixelArray + k * (long)MAX_VAL, (long)MAX_VAL, MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
+                MPI_Bcast(pixelArray + k * (int)MAX_VAL, (int)MAX_VAL, MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
 		total += MAX_VAL;
             }
             printf("De la: %lf pana la %lf\n",  k * MAX_VAL, k * MAX_VAL + (picture_size - count * MAX_VAL) - 1);
-            MPI_Bcast(pixelArray + count * (long)MAX_VAL, (long)(picture_size - count * MAX_VAL), MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
+            MPI_Bcast(pixelArray + count * (int)MAX_VAL, (int)(picture_size - count * MAX_VAL), MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
 	    total += picture_size - count * MAX_VAL;
+	    printf("verif: %lf, %lf\n", total, 3 * (double)input.width * (double)input.height);
         } else {
             MPI_Bcast(pixelArray, 3 * input.width * input.height, MPI_UNSIGNED_CHAR, root, MPI_COMM_WORLD);
         }
@@ -364,14 +365,17 @@ int main(int argc, char * argv[]) {
 
     if(rank != root){
         if(input.colored == 0){
-            for(long i = 0; i < input.height; i++)
-                for(long j = 0; j < input.width; j++)
+            for(int i = 0; i < input.height; i++)
+                for(int j = 0; j < input.width; j++)
                     input.pixels[i][j] = pixelArray[i * input.width + j];
                     
         }
         else {
             for(long i = 0; i < input.height; i++)
                 for(long j = 0; j < 3 * input.width; j++){
+		    if (rank == 1){
+		    	printf("%ld\n", i * (3 * input.width) + j);
+                    }
                     input.pixels[i][j] = pixelArray[i * (3 * input.width) + j];
         	}
 	}
@@ -388,19 +392,19 @@ int main(int argc, char * argv[]) {
 	elapsed += (finishTime.tv_nsec - startTime.tv_nsec) / 1000000000.0;
 
 	printf("%lf\n", elapsed);
-    long start, end;
+    int start, end;
     if(rank != root){
         start = rank * ceil((double)aux_out -> height/nProcesses);
 	    end = MIN(aux_out -> height, (rank + 1) * ceil((double)aux_out -> height/nProcesses) );
 
         if(input.colored == 0){
-            for(long i = start; i < end; i++)
-                for(long j = 0; j < aux_out -> width; j++)
+            for(int i = start; i < end; i++)
+                for(int j = 0; j < aux_out -> width; j++)
                     pixelArray[i * aux_out -> width + j] = output.pixels[i][j];
         }
         else {
-            for(long i = start; i < end; i++)
-                for(long j = 0; j < 3 * aux_out -> width; j++)
+            for(int i = start; i < end; i++)
+                for(int j = 0; j < 3 * aux_out -> width; j++)
                     pixelArray[i * (3 * aux_out -> width) + j] = output.pixels[i][j];
         }
 
@@ -414,18 +418,18 @@ int main(int argc, char * argv[]) {
         start = rank * ceil((double)aux_out -> height/nProcesses);
 	    end = MIN(aux_out -> height, (rank + 1) * ceil((double)aux_out -> height/nProcesses) ); 
         if(input.colored == 0){
-            for(long i = start; i < end; i++)
-                for(long j = 0; j < aux_out -> width; j++)
+            for(int i = start; i < end; i++)
+                for(int j = 0; j < aux_out -> width; j++)
                     pixelArray[i * aux_out -> width + j] = output.pixels[i][j];
         }
         else {
-            for(long i = start; i < end; i++)
-                for(long j = 0; j < 3 * aux_out -> width; j++)
+            for(int i = start; i < end; i++)
+                for(int j = 0; j < 3 * aux_out -> width; j++)
                     pixelArray[i * (3 * aux_out -> width) + j] = output.pixels[i][j];
         }
         
 
-        for(long i = 1; i < nProcesses; i++){
+        for(int i = 1; i < nProcesses; i++){
             start = i * ceil((double)aux_out -> height/nProcesses);
 	        end = MIN(aux_out -> height, (i + 1) * ceil((double)aux_out -> height/nProcesses) );
             if(input.colored == 0)
@@ -435,15 +439,15 @@ int main(int argc, char * argv[]) {
         }
 
         if(input.colored == 0){
-            for(long i = 0; i < output.height; i++)
-                for(long j = 0; j < output.width; j++){
+            for(int i = 0; i < output.height; i++)
+                for(int j = 0; j < output.width; j++){
                     output.pixels[i][j] = pixelArray[i * output.width + j];
                 }
                     
         }
         else {
-            for(long i = 0; i < output.height; i++)
-                for(long j = 0; j < 3 * output.width; j++){
+            for(int i = 0; i < output.height; i++)
+                for(int j = 0; j < 3 * output.width; j++){
                     output.pixels[i][j] = pixelArray[i * (3 * output.width) + j];
                 }
         }     
