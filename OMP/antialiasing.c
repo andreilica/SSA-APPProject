@@ -140,71 +140,59 @@ void* antialiasing()
 
         if(aux_out -> colored == 0) { //grayscale
 
-            k = start;
-            #pragma omp task private(x,y,z,i,j,new_pixel,q,w) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
-                    new_pixel = 0;
-                   
-                    for(i = x, q = 0; i < x + resize_factor && q < 3; i++, q++)
-                        for(j = y, w = 0; j < y + resize_factor && w < 3; j++, w++){
-                            new_pixel += aux_in -> pixels[i][j] * GaussianKernel[q][w];
-                        }
-                    aux_out -> pixels[k][z] = new_pixel / 16;
+            #pragma omp parallel for private(k,i,q,j,y,w,new_pixel,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if (k < end){
+                    for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
+                        new_pixel = 0;
+                       
+                        for(i = x, q = 0; i < x + resize_factor && q < 3; i++, q++)
+                            for(j = y, w = 0; j < y + resize_factor && w < 3; j++, w++){
+                                new_pixel += aux_in -> pixels[i][j] * GaussianKernel[q][w];
+                            }
+                        aux_out -> pixels[k][z] = new_pixel / 16;
+                    }
                 }
 
-            #pragma omp critical
-            {
-                if (k == end) {
-                   #pragma omp taskwait
-                   x = end * resize_factor;
+                else{
+                    x = (int) end * resize_factor;
                 }
-                else k++;
-            }
 
             }
                        
-        } else { //color
-            
-                k = start;
-                #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) firstprivate(k)
-                for(x = start * resize_factor; x < (long)end * resize_factor; x+=resize_factor) {
-                    for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
+        } 
+        else { //color
+                
+            #pragma omp parallel for private(k,i,q,j,y,w,green,blue,red,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x+=resize_factor) {
+                k = (int)x / resize_factor;
+                if (k < end) {
+                    for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3) {
                         red = 0;
                         green = 0;
                         blue = 0;
                         for(i = x, q = 0; i < x + resize_factor && q < 3; i++, q++)
-                            for(j = y, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++){
+                            for(j = y, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++)
                                 red += aux_in -> pixels[i][j] * GaussianKernel[q][w];
-                              
-                            }
                        
                         for(i = x, q = 0; i < x + resize_factor && q < 3; i++, q++)
-                            for(j = y + 1, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++){
+                            for(j = y + 1, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++)
                                 green += aux_in -> pixels[i][j] * GaussianKernel[q][w];
-                              
-                            }
                         
                         for(i = x, q = 0; i < x + resize_factor && q < 3; i++, q++)
-                            for(j = y + 2, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++){
+                            for(j = y + 2, w = 0; j < y + 3 * resize_factor && w < 3; j+= 3, w++)
                                 blue += aux_in -> pixels[i][j] * GaussianKernel[q][w];
-                                
-                            }
-                        
                         
                        aux_out -> pixels[k][z] = red / 16;
                        aux_out -> pixels[k][z + 1] = green / 16;
                        aux_out -> pixels[k][z + 2] = blue / 16;
                     }
+                }
 
-                    #pragma omp critical
-                    {
-                    if (k == end){ 
-                        #pragma omp taskwait
-                        x = end * resize_factor;
-                    }
-                    else k++;
-                    }
+                else {
+                    x = (int) end * resize_factor;
+                }
             }
         }
 
@@ -212,66 +200,59 @@ void* antialiasing()
         
         if(aux_out -> colored == 0) { //grayscale
 
-            k = start;
-            #pragma omp task private(x,y,z,i,j,new_pixel) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
-                    new_pixel = 0;
-                    
-                    for(i = x; i < x + resize_factor; i++)
-                        for(j = y; j < y + resize_factor; j++){
-                            new_pixel += aux_in -> pixels[i][j];
-                        }
-                    aux_out -> pixels[k][z] = new_pixel / square_resize;
-                }
-
-                #pragma omp critical
-                {
-                    if (k == end){
-                        #pragma omp taskwait
-                        x = end * resize_factor;
+            #pragma omp parallel for private(k,i,q,j,y,w,new_pixel,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if (k < end){
+                    for(y = 0, z = 0; y < aux_in -> width && z < aux_out -> width; y += resize_factor, z++){
+                        new_pixel = 0;
+                        
+                        for(i = x; i < x + resize_factor; i++)
+                            for(j = y; j < y + resize_factor; j++){
+                                new_pixel += aux_in -> pixels[i][j];
+                            }
+                        aux_out -> pixels[k][z] = new_pixel / square_resize;
                     }
-                    else k++;
+                }
+                else{
+                    k = (int) end * resize_factor;
                 }
             }
                        
-        } else { //color
+        } else { //color 
             k = start;
-            #pragma omp task private(x,y,z,i,j,red,green,blue,q,w) firstprivate(k)
-            for(x = start * resize_factor; x < (long)end * resize_factor; x += resize_factor) {
-                for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
-                    red = 0;
-                    green = 0;
-                    blue = 0;
-                    for(i = x; i < x + resize_factor; i++)
-                        for(j = y; j < y + 3 * resize_factor; j+= 3){
-                            red += aux_in -> pixels[i][j];
-                            
-                        }
-                    
-                    for(i = x; i < x + resize_factor; i++)
-                        for(j = y + 1; j < y + 3 * resize_factor; j+= 3){
-                            green += aux_in -> pixels[i][j];
-                            
-                        }
-                    
-                    for(i = x; i < x + resize_factor; i++)
-                        for(j = y + 2; j < y + 3 * resize_factor; j+= 3){
-                            blue += aux_in -> pixels[i][j];
-                           
-                        }
-                    aux_out -> pixels[k][z] = red / square_resize;
-                    aux_out -> pixels[k][z + 1] = green / square_resize;
-                    aux_out -> pixels[k][z + 2] = blue / square_resize;
-                }
-
-                #pragma omp critical
-                {
-                    if (k == end){
-                        #pragma omp taskwait
-                        x = end * resize_factor;
+            #pragma omp parallel for private(k,i,q,j,y,w,green,blue,red,z) schedule(static)
+            for(x = (int)start * resize_factor; x < (int)end * resize_factor; x += resize_factor) {
+                k = (int) x / resize_factor;
+                if(k < end){
+                    for(y = 0, z = 0; y < aux_in -> width * 3 && z < aux_out -> width * 3; y += 3 * resize_factor, z+= 3){
+                        red = 0;
+                        green = 0;
+                        blue = 0;
+                        for(i = x; i < x + resize_factor; i++)
+                            for(j = y; j < y + 3 * resize_factor; j+= 3){
+                                red += aux_in -> pixels[i][j];
+                                
+                            }
+                        
+                        for(i = x; i < x + resize_factor; i++)
+                            for(j = y + 1; j < y + 3 * resize_factor; j+= 3){
+                                green += aux_in -> pixels[i][j];
+                                
+                            }
+                        
+                        for(i = x; i < x + resize_factor; i++)
+                            for(j = y + 2; j < y + 3 * resize_factor; j+= 3){
+                                blue += aux_in -> pixels[i][j];
+                               
+                            }
+                        aux_out -> pixels[k][z] = red / square_resize;
+                        aux_out -> pixels[k][z + 1] = green / square_resize;
+                        aux_out -> pixels[k][z + 2] = blue / square_resize;
                     }
-                    else k++;
+                }
+                else{
+                    x = (int) end * resize_factor;
                 }
             }
         }
